@@ -6,6 +6,9 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from AI_component.components.command_check import command_check
+from AI_component.components.gemini import get_response
+from AI_component.components.lesson_introduction import get_introduce_transcript
+from AI_component.firebase.firebase import get_outline
 
 logging.basicConfig(level=logging.DEBUG, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -15,6 +18,8 @@ app = FastAPI()
 class Prompt(BaseModel):
     prompt_content:str
     first_time:bool
+    outline: dict
+    user_info: dict
 
 
 @app.get("/")
@@ -42,7 +47,32 @@ async def prompt_processing(prompt: Prompt = None):
             "type": "action",
             "action_type": detect_action
         }
+
+    logging.info("Handling the prompt...")
+    if prompt.first_time:
+        start = time.time()
+        response = handle_first_time(prompt)
+        logging.info(f"handle_first_time time: {time.time() - start}")
+        return {
+            "type": "prompt",
+            "outline": get_outline(prompt),
+            "result": response
+        }
+    
+    # RAG-like process
+
+    # Get response
+    response = get_response(prompt.prompt_content)
+
+    # Return the result
     return {
-        "test": "ok"
+        "type": "prompt",
+        "outline": prompt.outline,
+        "result": response
     }
     
+def handle_first_time(prompt):
+    # response = get_response(f"Hãy trả về cho tôi một đoạn văn giống như đoạn văn này: {get_introduce_transcript(prompt)}. Thông tin người dùng là {str(prompt.user_info)}")
+    # Do other first-time things
+
+    return get_introduce_transcript(prompt)
