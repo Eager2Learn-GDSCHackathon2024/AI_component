@@ -14,3 +14,9 @@ def cosine_similarity(matrix1, matrix2):
 
     # Compute cosine similarity
     return dot_product / (magnitude1 * magnitude2)
+
+def complete_prompt(text_data, input_string):
+    """
+    Combine before get response
+    """
+    pass
